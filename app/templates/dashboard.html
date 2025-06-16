@@ -54,14 +54,78 @@
                         <input type="text" id="track-title" name="title" class="w-full p-3 bg-[#333] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
                     </div>
                     <div class="mb-4">
-                        <label for="audio-file" class="block text-sm font-medium text-gray-300 mb-2">Audio File (MP3, WAV)</label>
+                        <label for="audio-file" class="block text-sm font-medium text-gray-300 mb-2">Audio File (MP3, WAV, M4A, FLAC)</label>
                         <input type="file" id="audio-file" name="file" accept=".mp3,.wav,.m4a,.flac" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700" required>
                     </div>
+                    
+                    <!-- Performance Mode Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-3">Encryption Performance Mode</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="performance-mode-card bg-[#333] p-4 rounded-lg border-2 border-transparent hover:border-green-500 cursor-pointer transition-all" data-mode="fast">
+                                <div class="flex items-center mb-2">
+                                    <input type="radio" id="mode-fast" name="performance_mode" value="fast" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-500 bg-gray-700">
+                                    <label for="mode-fast" class="ml-2 text-sm font-semibold text-white">⚡ Fast Mode</label>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-2">Nhanh nhất, phù hợp cho testing</p>
+                                <div class="text-xs">
+                                    <span class="text-yellow-400">Security: Medium</span><br>
+                                    <span class="text-green-400">Speed: 10x faster</span>
+                                </div>
+                            </div>
+                            
+                            <div class="performance-mode-card bg-[#333] p-4 rounded-lg border-2 border-green-500 cursor-pointer transition-all" data-mode="balanced">
+                                <div class="flex items-center mb-2">
+                                    <input type="radio" id="mode-balanced" name="performance_mode" value="balanced" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-500 bg-gray-700" checked>
+                                    <label for="mode-balanced" class="ml-2 text-sm font-semibold text-white">⚖️ Balanced Mode</label>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-2">Cân bằng tốc độ và bảo mật</p>
+                                <div class="text-xs">
+                                    <span class="text-green-400">Security: High</span><br>
+                                    <span class="text-blue-400">Speed: 5x faster</span>
+                                </div>
+                            </div>
+                            
+                            <div class="performance-mode-card bg-[#333] p-4 rounded-lg border-2 border-transparent hover:border-green-500 cursor-pointer transition-all" data-mode="secure">
+                                <div class="flex items-center mb-2">
+                                    <input type="radio" id="mode-secure" name="performance_mode" value="secure" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-500 bg-gray-700">
+                                    <label for="mode-secure" class="ml-2 text-sm font-semibold text-white">🔒 Secure Mode</label>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-2">Bảo mật tối đa cho production</p>
+                                <div class="text-xs">
+                                    <span class="text-red-400">Security: Maximum</span><br>
+                                    <span class="text-gray-400">Speed: Standard</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="file-size-recommendation" class="mt-3 p-3 bg-[#1a1a1a] rounded-md hidden">
+                            <p class="text-sm text-gray-300"><i class="fas fa-lightbulb text-yellow-400"></i> <span id="recommendation-text"></span></p>
+                        </div>
+                    </div>
+                    
                     <div class="mb-4 flex items-center">
                         <input id="is-public" name="is_public" type="checkbox" class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-green-600 focus:ring-green-500">
                         <label for="is-public" class="ml-3 block text-sm font-medium text-gray-300">Make this track public for everyone to discover</label>
                     </div>
-                    <button type="submit" class="btn-primary text-white font-bold py-2 px-4 rounded-full">Upload and Encrypt</button>
+                    
+                    <!-- Progress Section (Hidden by default) -->
+                    <div id="upload-progress" class="mb-4 hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-300">Upload Progress</span>
+                            <span id="progress-percentage" class="text-sm text-green-400">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-2 text-sm text-gray-400">
+                            <span id="progress-step">Initializing...</span>
+                            <span id="estimated-time" class="float-right"></span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="upload-btn" class="btn-primary text-white font-bold py-2 px-4 rounded-full">
+                        <i class="fas fa-upload mr-2"></i>Upload and Encrypt
+                    </button>
                 </form>
             </div>
 

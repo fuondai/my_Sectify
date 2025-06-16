@@ -2,9 +2,10 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.schemas.audio import AudioDB
 
-async def create_track(db: AsyncIOMotorClient, track_data: AudioDB):
+async def create_track(db: AsyncIOMotorClient, track_data: dict):
     """Creates a new track in the database."""
-    await db["tracks"].insert_one(track_data.dict())
+    result = await db["tracks"].insert_one(track_data)
+    track_data["_id"] = str(result.inserted_id)
     return track_data
 
 async def get_tracks_by_owner(db: AsyncIOMotorClient, owner_id: str):

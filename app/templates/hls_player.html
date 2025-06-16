@@ -15,6 +15,17 @@
         
         <div class="bg-[#181818] p-4 rounded-lg shadow-lg">
             <audio id="audio" controls class="w-full rounded-md"></audio>
+            
+            <!-- Processing message -->
+            <div id="processing-message" class="mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded" style="display: none;">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-800 mr-2"></div>
+                    Track is still processing. Retrying in 5 seconds...
+                </div>
+            </div>
+            
+            <!-- Error message -->
+            <div id="error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-800 rounded" style="display: none;"></div>
         </div>
 
         <div class="mt-8">
@@ -23,6 +34,27 @@
     </div>
 
     <script>
+        // Helper functions to show/hide messages
+        function showProcessingMessage() {
+            document.getElementById('processing-message').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        function hideProcessingMessage() {
+            document.getElementById('processing-message').style.display = 'none';
+        }
+        
+        function showErrorMessage(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('processing-message').style.display = 'none';
+        }
+        
+        function hideErrorMessage() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const audio = document.getElementById('audio');
             // Construct the playlist URL from the track object passed by the backend.
@@ -62,11 +94,27 @@
                 // Once the manifest is parsed, start playback
                 hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data) {
                     console.log('Manifest loaded, found ' + data.levels.length + ' quality level');
+                    hideProcessingMessage();
+                    hideErrorMessage();
                     audio.play();
                 });
 
                 // Handle HLS errors.
                 hls.on(Hls.Events.ERROR, function (event, data) {
+                    console.error('HLS Error:', data);
+                    
+                    // Check for HTTP 425 (Too Early) - track still processing
+                    if (data.response && data.response.code === 425) {
+                        console.log("Track is still processing, will retry in 5 seconds...");
+                        showProcessingMessage();
+                        setTimeout(() => {
+                            console.log("Retrying playlist load...");
+                            hideProcessingMessage();
+                            hls.loadSource(playlistUrl);
+                        }, 5000);
+                        return;
+                    }
+                    
                     if (data.fatal) {
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
@@ -80,16 +128,17 @@
                             default:
                                 console.error('An unrecoverable fatal error occurred. Destroying HLS instance.', data);
                                 hls.destroy();
+                                showErrorMessage("Playback failed. Please try again later.");
                                 break;
                         }
                     }
                 });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
                 // Fallback for native HLS support (e.g., Safari).
                 console.log("HLS.js not supported, falling back to native playback.");
-                video.src = playlistUrl;
-                video.addEventListener('loadedmetadata', function () {
-                    video.play().catch(e => console.error("Autoplay was prevented:", e));
+                audio.src = playlistUrl;
+                audio.addEventListener('loadedmetadata', function () {
+                    audio.play().catch(e => console.error("Autoplay was prevented:", e));
                 });
             } else {
                 console.error("This browser does not support HLS playback.");

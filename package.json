@@ -1,0 +1,20 @@
+{
+  "name": "sectify",
+  "version": "1.0.0",
+  "description": "## About The Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuondai/my_Sectify.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fuondai/my_Sectify/issues"
+  },
+  "homepage": "https://github.com/fuondai/my_Sectify#readme"
+}
