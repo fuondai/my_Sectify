@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - Sectify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .btn-primary {
+            background-color: #1DB954;
+        }
+        .btn-primary:hover {
+            background-color: #1ED760;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-black/80 backdrop-blur-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center space-x-2">
+                <i class="fas fa-shield-alt text-green-500 text-2xl"></i>
+                <h1 class="text-2xl font-bold text-white">Sectify</h1>
+            </a>
+            <div class="flex items-center space-x-4">
+                 <span id="user-greeting" class="text-white font-semibold"></span>
+                 <a href="/discover" class="text-white hover:text-green-400 transition-colors">Discover</a>
+                 <a href="/account" class="text-white hover:text-green-400 transition-colors">Account</a>
+                 <button id="logout-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">Log out</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-[#181818] p-8 rounded-lg shadow-xl">
+            <h2 class="text-3xl font-bold mb-6">My Dashboard</h2>
+            <p class="text-gray-400 mb-8">Manage your uploaded music and account settings here.</p>
+            
+            <!-- Upload Section -->
+            <div class="bg-[#282828] p-6 rounded-md">
+                <h3 class="text-xl font-semibold mb-4">Upload New Track</h3>
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="track-title" class="block text-sm font-medium text-gray-300 mb-2">Track Title</label>
+                        <input type="text" id="track-title" name="title" class="w-full p-3 bg-[#333] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="audio-file" class="block text-sm font-medium text-gray-300 mb-2">Audio File (MP3, WAV)</label>
+                        <input type="file" id="audio-file" name="file" accept=".mp3,.wav,.m4a,.flac" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700" required>
+                    </div>
+                    <div class="mb-4 flex items-center">
+                        <input id="is-public" name="is_public" type="checkbox" class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-green-600 focus:ring-green-500">
+                        <label for="is-public" class="ml-3 block text-sm font-medium text-gray-300">Make this track public for everyone to discover</label>
+                    </div>
+                    <button type="submit" class="btn-primary text-white font-bold py-2 px-4 rounded-full">Upload and Encrypt</button>
+                </form>
+            </div>
+
+            <!-- My Tracks Section -->
+            <div class="mt-10">
+                <h3 class="text-xl font-semibold mb-4">My Library</h3>
+                <div id="track-list" class="space-y-4">
+                    <!-- Track items will be dynamically inserted here -->
+                    <p class="text-gray-500">You haven't uploaded any tracks yet.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

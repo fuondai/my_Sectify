@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sectify Player - {{ track.title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+</head>
+<body class="bg-black text-white">
+    <div class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold mb-4">Now Playing</h1>
+        <h2 class="text-2xl text-gray-400 mb-8">{{ track.title }}</h2>
+        
+        <div class="bg-[#181818] p-4 rounded-lg shadow-lg">
+            <audio id="audio" controls class="w-full rounded-md"></audio>
+        </div>
+
+        <div class="mt-8">
+            <a href="/dashboard" class="text-green-500 hover:underline">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const audio = document.getElementById('audio');
+            // Construct the playlist URL from the track object passed by the backend.
+            // Vietnamese comment: Xây dựng URL an toàn để tải playlist, trỏ đến endpoint API đã được bảo vệ.
+            const trackId = "{{ track.track_id }}";
+            // Vietnamese comment: Sửa lỗi URL - Thêm tiền tố /audio để khớp với API router.
+            // Dùng endpoint đã ký URL, không cần header Authorization
+            const playlistUrl = `/api/v1/stream/playlist/${trackId}`;
+            const accessToken = localStorage.getItem('accessToken');
+
+
+            // Check if HLS.js is supported by the browser.
+            if (Hls.isSupported()) {
+                console.log("HLS.js is supported. Initializing player.");
+                const hls = new Hls({
+                    // Configure xhrSetup to add the Authorization header to all HLS requests
+                    xhrSetup: function (xhr, url) {
+                        console.log(`HLS.js is requesting: ${url}`);
+                        // Không cần Authorization cho public content
+                        if (accessToken) {
+                            xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+                        }
+                        xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                        xhr.setRequestHeader('Pragma', 'no-cache');
+                        xhr.setRequestHeader('Expires', '0');
+                    },
+                    // Enable CORS for all requests
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+
+                // Load playlist directly; Hls.js will automatically request segments/keys
+                hls.attachMedia(audio);
+                hls.loadSource(playlistUrl);
+
+                // Once the manifest is parsed, start playback
+                hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data) {
+                    console.log('Manifest loaded, found ' + data.levels.length + ' quality level');
+                    audio.play();
+                });
+
+                // Handle HLS errors.
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.error('Fatal network error encountered, trying to recover...');
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.error('Fatal media error encountered, trying to recover...', data);
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.error('An unrecoverable fatal error occurred. Destroying HLS instance.', data);
+                                hls.destroy();
+                                break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Fallback for native HLS support (e.g., Safari).
+                console.log("HLS.js not supported, falling back to native playback.");
+                video.src = playlistUrl;
+                video.addEventListener('loadedmetadata', function () {
+                    video.play().catch(e => console.error("Autoplay was prevented:", e));
+                });
+            } else {
+                console.error("This browser does not support HLS playback.");
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-red-500 bg-red-100 border border-red-400 rounded p-4 mt-4';
+                errorDiv.textContent = 'Your browser does not support the required audio format.';
+                document.querySelector('.container').appendChild(errorDiv);
+            }
+        });
+    </script>
+</body>
+</html>

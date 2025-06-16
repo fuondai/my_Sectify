@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Sectify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-black/80 backdrop-blur-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center space-x-2">
+                <i class="fas fa-shield-alt text-green-500 text-2xl"></i>
+                <h1 class="text-2xl font-bold text-white">Sectify</h1>
+            </a>
+            <div class="flex items-center space-x-4">
+                 <a href="/dashboard" class="text-white hover:text-green-400 transition-colors">Dashboard</a>
+                 <span id="user-greeting" class="text-white font-semibold"></span>
+                 <button id="logout-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">Log out</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-[#181818] p-8 rounded-lg shadow-xl max-w-2xl mx-auto">
+            <h2 class="text-3xl font-bold mb-6">Account Settings</h2>
+            
+            <!-- 2FA Section -->
+            <div id="totp-section" class="bg-[#282828] p-6 rounded-md">
+                <h3 class="text-xl font-semibold mb-4">Two-Factor Authentication (2FA)</h3>
+                
+                <!-- Loading State -->
+                <div id="totp-loading">
+                    <p class="text-gray-400">Loading 2FA status...</p>
+                </div>
+
+                <!-- 2FA Disabled State -->
+                <div id="totp-disabled-view" class="hidden">
+                    <p class="text-gray-400 mb-4">Enhance your account security by enabling 2FA.</p>
+                    <button id="enable-totp-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-full hover:bg-green-700 transition-colors">Enable 2FA</button>
+                </div>
+
+                <!-- 2FA Setup State -->
+                <div id="totp-setup-view" class="hidden">
+                    <p class="mb-4">1. Scan the QR code with your authenticator app (e.g., Google Authenticator).</p>
+                    <div id="qr-code-container" class="bg-white p-4 rounded-md inline-block mb-4"></div>
+                    <p class="mb-4">2. Enter the 6-digit code from your app to verify and complete the setup.</p>
+                    <form id="verify-totp-form" class="flex items-center space-x-2">
+                        <input type="text" id="totp-code" name="code" placeholder="123456" maxlength="6" class="p-2 bg-[#333] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500 w-32">
+                        <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700">Verify & Enable</button>
+                    </form>
+                </div>
+
+                <!-- 2FA Enabled State -->
+                <div id="totp-enabled-view" class="hidden">
+                    <p class="text-green-400 mb-4"><i class="fas fa-check-circle"></i> Two-Factor Authentication is currently enabled.</p>
+                    <p class="text-gray-400 mb-4">To disable 2FA, please enter your password.</p>
+                     <form id="disable-totp-form" class="flex items-center space-x-2">
+                        <input type="password" id="user-password" name="password" placeholder="Your Password" class="p-2 bg-[#333] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500">
+                        <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-full hover:bg-red-700">Disable 2FA</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/account.js"></script>
+</body>
+</html>

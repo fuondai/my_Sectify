@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sectify - Secure Music Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background-color: #1DB954;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #1ED760;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-[#181818] p-8 rounded-lg shadow-xl w-full max-w-md relative">
+            <button class="close-modal absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+            <h2 class="text-2xl font-bold text-center mb-6">Log in to Sectify</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-email" class="block text-sm font-medium text-gray-300 mb-2">Email address</label>
+                    <input type="email" id="login-email" name="email" class="w-full p-3 bg-[#282828] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div id="password-field" class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input type="password" id="login-password" name="password" class="w-full p-3 bg-[#282828] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div id="totp-field" class="hidden mb-6">
+                    <label for="login-totp" class="block text-sm font-medium text-gray-300 mb-2">2FA Authentication Code</label>
+                    <input type="text" id="login-totp" name="totp_code" class="w-full p-3 bg-[#282828] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
+                </div>
+                <button type="submit" class="w-full btn-primary text-white font-bold py-3 px-4 rounded-full">Log In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-[#181818] p-8 rounded-lg shadow-xl w-full max-w-md relative">
+            <button class="close-modal absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+            <h2 class="text-2xl font-bold text-center mb-6">Sign up for free</h2>
+            <form id="signup-form">
+                <div class="mb-4">
+                    <label for="signup-name" class="block text-sm font-medium text-gray-300 mb-2">Name</label>
+                    <input type="text" id="signup-name" name="name" class="w-full p-3 bg-[#282828] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="signup-email" class="block text-sm font-medium text-gray-300 mb-2">Email address</label>
+                    <input type="email" id="signup-email" name="email" class="w-full p-3 bg-[#282828] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div class="mb-6">
+                    <label for="signup-password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input type="password" id="signup-password" name="password" class="w-full p-3 bg-[#282828] border border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white font-bold py-3 px-4 rounded-full">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-black/80 backdrop-blur-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-shield-halved text-3xl text-green-500"></i>
+                <h1 class="text-2xl font-bold text-white">Sectify</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Guest Nav -->
+                <div id="guest-nav" class="flex items-center space-x-4">
+                    <a href="#" class="text-gray-300 hover:text-white transition">Premium</a>
+                    <a href="/discover" class="text-white hover:text-green-400 transition-colors">Discover</a>
+                    <a href="#features" class="text-white hover:text-green-400 transition-colors">Features</a>
+                    <a href="#how-it-works" class="text-white hover:text-green-400 transition-colors">How It Works</a>
+                    <span class="text-gray-500">|</span>
+                    <a href="#" id="signup-btn" class="text-gray-300 hover:text-white font-semibold transition">Sign up</a>
+                    <a href="#" id="login-btn" class="bg-white text-black font-bold py-2 px-6 rounded-full hover:scale-105 transition-transform">Log in</a>
+                </div>
+                <!-- User Nav (hidden by default) -->
+                <div id="user-nav" class="hidden flex items-center space-x-4">
+                    <span id="user-greeting" class="text-white font-semibold"></span>
+                    <a href="/discover" class="text-white hover:text-green-400 transition-colors">Discover</a>
+                    <a href="/dashboard" class="text-white hover:text-green-400 transition-colors">My Dashboard</a>
+                    <a href="/account" class="text-white hover:text-green-400 transition-colors">Account</a>
+                    <button id="logout-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">Log out</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <section class="h-screen -mt-16 flex items-center justify-center text-center bg-gradient-to-b from-green-900/60 via-black to-[#121212]">
+            <div class="container mx-auto px-6">
+                <h2 class="text-5xl md:text-7xl font-extrabold leading-tight mb-4">Your Music, Your Fortress.</h2>
+                <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8">The ultimate platform for artists who demand security. Stream your work with peace of mind, knowing your creations are protected by state-of-the-art encryption.</p>
+                <button class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg uppercase tracking-wider hover:scale-105 transition-transform">
+                    Get Started
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black text-gray-400 py-12">
+        <div class="container mx-auto px-6">
+            <p class="text-center">&copy; 2025 Sectify. All Rights Reserved. Built for artists.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/auth.js"></script>
+</body>
+</html>
