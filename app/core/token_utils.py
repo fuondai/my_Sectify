@@ -14,7 +14,13 @@ from app.core.config import SECRET_KEY, ALGORITHM
 TOKEN_EXPIRE_MINUTES_DEFAULT = 2  # reduced TTL to strengthen anti-scraping
 
 
-def create_track_token(track_id: str, ip: Optional[str] = None, expires_minutes: int = TOKEN_EXPIRE_MINUTES_DEFAULT) -> str:
+def create_track_token(
+    track_id: str,
+    ip: Optional[str] = None,
+    *,
+    range_header: Optional[str] = None,
+    expires_minutes: int = TOKEN_EXPIRE_MINUTES_DEFAULT,
+) -> str:
     """Tạo JWT cho một bản nhạc HLS.
 
     Args:
@@ -29,10 +35,18 @@ def create_track_token(track_id: str, ip: Optional[str] = None, expires_minutes:
     }
     if ip:
         payload["ip"] = ip
+    if range_header:
+        payload["rng"] = range_header
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def verify_track_token(token: str, track_id: str, ip: Optional[str] = None) -> None:
+def verify_track_token(
+    token: str,
+    track_id: str,
+    *,
+    ip: Optional[str] = None,
+    range_header: Optional[str] = None,
+) -> None:
     """Xác minh JWT, ném HTTPException 403/401 khi không hợp lệ."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -44,5 +58,8 @@ def verify_track_token(token: str, track_id: str, ip: Optional[str] = None) -> N
 
     if ip and payload.get("ip") and payload["ip"] != ip:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="IP mismatch")
+
+    if payload.get("rng") and (range_header or "") != payload["rng"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Range header mismatch")
 
     # Hết hạn được jose kiểm tra tự động.

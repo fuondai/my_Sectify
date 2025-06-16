@@ -51,13 +51,17 @@ Below tasks will be tackled **từ dễ đến khó**; mỗi mục hoàn thành 
 - [x] Implement rate limiting on sensitive endpoints (key serving, login).
 - [x] Key Rotation (automatic key refresh every 30 min)
 - [x] Token-based access (signed URL)
+- [x] Add strong security HTTP headers (CSP, Referrer, Cache-Control) via middleware
+- [x] Implement hot-link & embed protection (Origin / Referer / Sec-Fetch-Site validation)
+- [x] Enhance token binding to IP & Range headers
+- [x] Implement Just-In-Time key alias rotation (unique, 60-s alias per playlist)
 
 ### Phase 5: Anti-Scraping & DRM Roadmap
 
 - [x] Reduce JWT TTL to 60-120 s & use small sliding playlist (`hls_list_size ≤ 4`).  ✅
 - [x] Tighten rate-limit & add anomaly logging for `/segment` & `/key`.  ✅
 - [x] Dynamic playlist generation with per-segment signed nonce URL.  ✅
-- [ ] Automatic cleanup of old HLS segments from disk.
+- [x] Automatic cleanup of old HLS segments from disk.
 - [x] Forensic audio watermark per-user during transcoding / on-the-fly.  ✅
 - [ ] Evaluate DRM integration (Widevine / FairPlay / PlayReady) with DASH/CENC.
 

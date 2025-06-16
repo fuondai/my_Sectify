@@ -7,6 +7,7 @@ import logging
 import re
 import time
 import hmac
+from datetime import datetime, timezone, timedelta
 import hashlib
 
 from typing import Optional
@@ -18,10 +19,12 @@ from app.db.mongodb_utils import get_database
 from app.crud.audio import get_track_by_id
 from app.core.audio_processing import KEY_DIRECTORY
 from app.core.token_utils import create_track_token, verify_track_token
+from app.core.jit_key_alias import create_key_alias, resolve_key_alias
 from app.core.config import SECRET_KEY
 from app.api.v1.dependencies import try_get_current_user
 from app.schemas.user import UserInDB
 from app.core.limiter import limiter
+from app.core.embed_protection import check_embed_source
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,7 +38,8 @@ async def get_signed_playlist(
     track_id: str,
     request: Request,
     db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: Optional[UserInDB] = Depends(try_get_current_user)
+    current_user: Optional[UserInDB] = Depends(try_get_current_user),
+    _: None = Depends(check_embed_source)
 ):
     """
     Returns a rewritten .m3u8 playlist with signed URIs for keys and segments.
@@ -64,8 +68,11 @@ async def get_signed_playlist(
     try:
         ROTATION_INTERVAL_MINUTES = 30
         last_rotated = track.get("last_key_rotation")
+        # Ensure timezone-aware comparison
+        if last_rotated and last_rotated.tzinfo is None:
+            last_rotated = last_rotated.replace(tzinfo=timezone.utc)
         if last_rotated:
-            from datetime import datetime, timezone, timedelta
+            
             if datetime.now(timezone.utc) - last_rotated > timedelta(minutes=ROTATION_INTERVAL_MINUTES):
                 logger.info("Rotating key for track %s", track_id)
                 original_path = track.get("original_file_path")
@@ -113,17 +120,24 @@ async def get_signed_playlist(
 
     # Short-lived token tied to viewer-specific track
     token = create_track_token(wm_track_id, ip=client_ip)
+    alias_value = create_key_alias(wm_track_id, os.path.join(KEY_DIRECTORY, f"{wm_track_id}.key"))
 
     # Read the original playlist and rewrite URIs to point to our secure endpoints
     new_lines: list[str] = []
-    with open(playlist_path, "r", encoding="utf-8") as f:
+    try:
+        f_handle = open(playlist_path, "r", encoding="utf-8")
+    except FileNotFoundError:
+        # Fallback to original playlist if viewer-specific not yet generated
+        playlist_path = track["hls_playlist_path"]
+        f_handle = open(playlist_path, "r", encoding="utf-8")
+    with f_handle as f:
         for line in f.readlines():
             stripped = line.strip()
             if stripped.startswith("#EXT-X-KEY"):
                 # Rewrite the key URI attribute with our secure, signed URL while preserving other attributes
                 new_line = re.sub(
                     r'URI="[^"]+"',
-                    f'URI="/api/v1/stream/key/{wm_track_id}?token={token}"',
+                    f'URI="/api/v1/stream/key/{wm_track_id}?token={token}&alias={alias_value}"',
                     stripped
                 ) + "\n"
                 new_lines.append(new_line)
@@ -142,12 +156,18 @@ async def get_signed_playlist(
 
 @router.get("/key/{track_id}", tags=["stream"])
 @limiter.limit("10/minute")
-async def get_key(track_id: str, request: Request, token: str = Query(...)):
+async def get_key(
+    track_id: str,
+    request: Request,
+    token: str = Query(...),
+    alias: str = Query(...),
+    _ : None = Depends(check_embed_source),
+):
     """Serves the encryption key after validating the track token."""
     client_ip = request.client.host
-    verify_track_token(token, track_id, ip=client_ip)
+    verify_track_token(token, track_id, ip=client_ip, range_header=request.headers.get("range"))
 
-    key_path = os.path.join(KEY_DIRECTORY, f"{track_id}.key")
+    key_path = resolve_key_alias(alias, track_id)
     if not os.path.exists(key_path):
         raise HTTPException(status_code=404, detail="Key file not found")
     return FileResponse(key_path, media_type="application/octet-stream")
@@ -162,7 +182,8 @@ async def get_segment(
     sig: str = Query(...),
     current_user: Optional[UserInDB] = Depends(try_get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_database),
-    request: Request = None
+    request: Request = None,
+    _ : None = Depends(check_embed_source)
 ):
     """
     Serves an HLS media segment (.ts file) after validating the JWT token.
@@ -170,19 +191,23 @@ async def get_segment(
     """
     # Validate signature freshness (≤10 s)
     if abs(time.time() - ts) > 10:
-        raise HTTPException(status_code=401, detail="Signature expired.")
+        raise HTTPException(status_code=400, detail="Signature expired.")
 
     expected_sig = hmac.new(SECRET_KEY.encode(), f"{track_id}:{segment_name}:{ts}".encode(), hashlib.sha256).hexdigest()[:20]
     if not hmac.compare_digest(expected_sig, sig):
-        raise HTTPException(status_code=401, detail="Invalid signature.")
+        raise HTTPException(status_code=400, detail="Invalid signature.")
 
     # Validate segment name to prevent path traversal for .ts files
     if not segment_name.startswith("segment") or not segment_name.endswith(".ts"):
         raise HTTPException(status_code=400, detail="Invalid segment name format.")
 
     segment_path = os.path.join("hls", track_id, segment_name)
+    if not os.path.exists(segment_path):
+        # Fallback to original track dir if viewer-specific not generated
+        orig_id = track_id.split("_")[0]
+        segment_path = os.path.join("hls", orig_id, segment_name)
 
-    # Security: Ensure the resolved path is within the HLS_DIR
+    # Security: Ensure the resolved path exists
     if not os.path.exists(segment_path):
         raise HTTPException(status_code=404, detail="Segment not found.")
 
